@@ -600,6 +600,36 @@ const support = await getEmbeddedPostgresTestSupport();
     expect(await current(agent.id)).toMatchObject({ lifecycleState: "ready", lifecycleVersion: ready.lifecycleVersion });
   });
 
+  it.each([
+    { previous: "local-board", author: "authenticated-owner", expected: "authenticated-owner" },
+    { previous: "named-owner", author: "authenticated-owner", expected: "named-owner" },
+    { previous: "local-board", author: null, expected: "local-board" },
+    { previous: "local-board", author: "local-board", expected: "local-board" },
+  ])("adopts only legacy setup identity on authenticated configuration change ($previous, $author)", async ({ previous, author, expected }) => {
+    const agent = await hire();
+    const before = await current(agent.id);
+    await db.update(agents).set({ lifecycleOperation: { ...before.lifecycleOperation!, responsibleUserId: previous } })
+      .where(eq(agents.id, agent.id));
+    await createAgentLifecycle(db).updateConfiguration(agent.id, { adapterConfig: { command: "echo", args: ["qualification"] } },
+      { recordRevision: { source: "test", createdByUserId: author } });
+    const updated = await current(agent.id);
+    expect(updated.lifecycleVersion).toBe(before.lifecycleVersion + 1);
+    expect(updated.lifecycleOperation?.id).not.toBe(before.lifecycleOperation?.id);
+    expect(updated.lifecycleOperation?.responsibleUserId).toBe(expected);
+  });
+
+  it("does not adopt a legacy setup identity for a profile-only edit", async () => {
+    const agent = await hire();
+    const before = await current(agent.id);
+    await db.update(agents).set({ lifecycleOperation: { ...before.lifecycleOperation!, responsibleUserId: "local-board" } })
+      .where(eq(agents.id, agent.id));
+    await createAgentLifecycle(db).updateConfiguration(agent.id, { title: "Updated profile" },
+      { recordRevision: { source: "test", createdByUserId: "authenticated-owner" } });
+    const updated = await current(agent.id);
+    expect(updated.lifecycleVersion).toBe(before.lifecycleVersion);
+    expect(updated.lifecycleOperation?.responsibleUserId).toBe("local-board");
+  });
+
   it("rejects identity, accounting, and unknown fields through every configuration entry point", async () => {
     const agent = await hire();
     const lifecycle = createAgentLifecycle(db);

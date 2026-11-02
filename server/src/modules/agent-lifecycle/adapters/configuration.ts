@@ -16,9 +16,15 @@ export async function updateAgentConfiguration(tx: Db, effects: LifecycleEffects
   const changed = ["adapterType", "adapterConfig", "runtimeConfig", "defaultEnvironmentId"].some(key =>
     Object.prototype.hasOwnProperty.call(patch, key) && !jsonEqual(patch[key as keyof typeof patch], current[key as keyof typeof current]));
   const invalidate = changed && ["preparing", "verifying", "resuming"].includes(current.lifecycleState);
+  const configuredByUserId = options?.recordRevision?.createdByUserId;
+  // An authenticated configuration edit adopts the pre-login placeholder only.
+  // Keep explicitly named responsible users and agent-authored edits unchanged.
+  const adoptLocalBoard = current.lifecycleOperation?.responsibleUserId === "local-board"
+    && configuredByUserId && configuredByUserId !== "local-board";
   const [updated] = await tx.update(agents).set({ ...patch, updatedAt: new Date(), ...(invalidate ? {
     lifecycleVersion: current.lifecycleVersion + 1, lifecycleError: null,
     lifecycleOperation: { ...current.lifecycleOperation!, id: randomUUID(), hostComplete: false,
+      ...(adoptLocalBoard ? { responsibleUserId: configuredByUserId } : {}),
       completedPluginIds: [], leaseOwner: undefined, leaseUntil: undefined, retryAt: undefined },
   } : {}) }).where(eq(agents.id, id)).returning();
   await effects.completeConfiguration(tx, current, updated, patch, options, publications);
