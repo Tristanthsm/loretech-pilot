@@ -1,3 +1,5 @@
+> **LoreTech fork:** start with [LORETECH.md](LORETECH.md). The `loretech` branch pins an upstream release. Executor and Brain integration are separate qualification steps.
+
 <p align="center">
   <img src="doc/assets/banner.jpg" alt="Paperclip is the app people use to manage AI agents for work." width="720" />
 </p>
