@@ -386,15 +386,17 @@ export async function buildLocalProcessSandboxSpawnTarget(input: {
 
   if (filesystemScope === "workspace") {
     args.push("--tmpfs", "/", "--proc", "/proc", "--dev", "/dev", "--tmpfs", "/tmp");
-    args.push(
-      "--symlink", "usr/bin", "/bin",
-      "--symlink", "usr/sbin", "/sbin",
-      "--symlink", "usr/lib", "/lib",
-      "--symlink", "usr/lib64", "/lib64",
-    );
-    // These destinations are already aliases into the /usr mount below. Binding
-    // a host path over a dangling alias fails on merged-/usr Linux hosts.
-    const systemAliases = ["/bin", "/sbin", "/lib", "/lib64"];
+    const systemAliases: string[] = [];
+    for (const [alias, target] of [["/bin", "usr/bin"], ["/sbin", "usr/sbin"], ["/lib", "usr/lib"], ["/lib64", "usr/lib64"]]) {
+      const hostPath = await fs.realpath(alias).catch(() => null);
+      const usrPath = await fs.realpath(`/${target}`).catch(() => null);
+      // Preserve physical system directories on unmerged-/usr hosts. Only
+      // pre-created aliases are covered by the read-only /usr bind below.
+      if (hostPath && hostPath === usrPath) {
+        args.push("--symlink", target, alias);
+        systemAliases.push(alias);
+      }
+    }
     const created = new Set<string>(["/", "/proc", "/dev", "/tmp", ...systemAliases]);
     const mounted = new Set<string>(systemAliases);
     const mount = async (source: string, access: LocalProcessSandboxAccess) => {

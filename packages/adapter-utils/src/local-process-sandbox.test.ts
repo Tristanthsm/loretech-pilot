@@ -3,7 +3,7 @@ import http from "node:http";
 import net from "node:net";
 import os from "node:os";
 import path from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   buildLocalProcessSandboxSpawnTarget,
   parseLocalProcessFilesystemScope,
@@ -27,6 +27,7 @@ async function withTmpDir<T>(tmpDir: string, run: () => Promise<T>): Promise<T> 
 }
 
 afterEach(async () => {
+  vi.restoreAllMocks();
   await Promise.all(cleanup.splice(0).map((candidate) => fs.rm(candidate, { recursive: true, force: true })));
 });
 
@@ -104,9 +105,26 @@ describe("local process sandbox", () => {
     expect(target.args).toEqual(expect.arrayContaining(["--ro-bind", "/usr", "/usr"]));
     for (let index = 0; index < target.args.length; index++) {
       if (["--bind", "--ro-bind"].includes(target.args[index])) {
-        expect(["/bin", "/sbin", "/lib", "/lib64"]).not.toContain(target.args[index + 2]);
+        const destination = target.args[index + 2];
+        if (["/bin", "/sbin", "/lib", "/lib64"].includes(destination)) {
+          expect(await fs.realpath(destination)).not.toBe(await fs.realpath(`/usr${destination}`));
+        }
       }
     }
+  });
+
+  it.runIf(process.platform === "linux")("retains physical system directories on an unmerged usr layout", async () => {
+    const workspace = await fs.mkdtemp(path.join(os.tmpdir(), "paperclip-unmerged-usr-"));
+    cleanup.push(workspace);
+    const realpath = fs.realpath.bind(fs);
+    vi.spyOn(fs, "realpath").mockImplementation(async (candidate, ...options) => {
+      if (["/bin", "/sbin", "/lib", "/lib64"].includes(String(candidate))) return String(candidate);
+      return realpath(candidate, ...options);
+    });
+    const target = await buildLocalProcessSandboxSpawnTarget({ executable: process.execPath, args: ["-e", "process.exit(0)"],
+      cwd: workspace, options: { workspaceDir: workspace, filesystemScope: "workspace" } });
+    expect(target.args).toEqual(expect.arrayContaining(["--ro-bind", "/bin", "/bin"]));
+    expect(target.args.join(" ")).not.toContain("--symlink usr/bin /bin");
   });
 
   it.runIf(process.platform === "linux")("binds a confined absolute alias to the synchronized workspace", async () => {
@@ -316,6 +334,7 @@ describe("local process sandbox", () => {
 
       const script = [
         "const fs = require('node:fs');",
+        "if (require('node:child_process').spawnSync('/bin/sh', ['-c', 'exit 0']).status !== 0) process.exit(7);",
         `try { fs.readFileSync(${JSON.stringify(outside)}, 'utf8'); process.exit(9); } catch (error) {`,
         "  if (!['ENOENT', 'EACCES'].includes(error.code)) throw error;",
         "}",
