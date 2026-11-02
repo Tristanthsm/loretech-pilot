@@ -1,6 +1,6 @@
 # Connect Codex after source bootstrap
 
-This handoff describes the pinned Paperclip release. No executor is configured by this change. Do not assume the Codex desktop session is the identity or login used by a Paperclip worker.
+This handoff describes the pinned Paperclip release. For the prepared private runtime and exact managed local sign-in path, see [LOCAL-RUNTIME.md](LOCAL-RUNTIME.md). Do not assume the Codex desktop session is the identity or login used by a Paperclip worker.
 
 ## 1. Prepare an isolated local runtime
 
@@ -11,6 +11,8 @@ Before startup, choose a dedicated runtime directory, private database, listener
 GitHub Actions are currently disabled on this fork. Inspect upstream workflows, credentials and release targets before enabling them. Run the upstream application gates before treating a runtime candidate as ready: `pnpm -r typecheck`, `pnpm test:run`, and `pnpm build`.
 
 ## 2. Set explicit executor permissions
+
+Authenticate through the agent's **AI connection** field and the native managed local OpenAI subscription flow. It supports local execution and isolates the login from desktop credentials. The separate adapter device-login button requires a sandbox; it is not the required path for this runtime.
 
 Use the native `codex_local` adapter. Codex must be available to the Paperclip execution host. Consult both the [adapter guide](../../docs/adapters/codex-local.md) and the pinned [configuration source](../../packages/adapters/codex-local/src/index.ts). The source takes priority where they differ.
 

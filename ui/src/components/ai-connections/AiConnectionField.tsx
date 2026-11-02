@@ -74,7 +74,7 @@ export function AiConnectionField({
   const [connecting, setConnecting] = useState(false);
   const [advancedSetup, setAdvancedSetup] = useState(false);
   const [reconnecting, setReconnecting] = useState<AiManagedConnectionSummary>();
-  const [allAgents, setAllAgents] = useState(true);
+  const [allAgents, setAllAgents] = useState(false);
   const [savedAccount, setSavedAccount] = useState<{ connectionId: string; grantId: string; method: AiAuthMethod }>();
   const changeBinding = (next: AiRuntimeConnectionBinding) => {
     if (legacy && !value) { if (!connecting) returnFocus.current = document.activeElement as HTMLElement; setPendingAdoption(next); }
@@ -104,7 +104,8 @@ export function AiConnectionField({
     returnFocus.current = document.activeElement as HTMLElement;
     setReconnecting(reconnect);
     setAdvancedSetup(!reconnect && (preferAdvanced || provider === "openrouter"));
-    setAllAgents(accounts.data?.canManageConnections ?? false);
+    // Connecting from an existing agent must not silently grant every agent access.
+    setAllAgents(agentId ? false : (accounts.data?.canManageConnections ?? false));
     setSavedAccount(undefined);
     selectDefault.reset();
     setConnecting(true);

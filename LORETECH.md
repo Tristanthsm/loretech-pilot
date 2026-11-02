@@ -14,10 +14,11 @@ Cells remain independent capability implementations. Existing private integratio
 
 ## Current delivery
 
-This bootstrap changes documentation only. It does not start a server, create an agent, connect Codex, connect the Brain, or invoke a Cell. The upstream application remains unchanged. GitHub Actions are disabled on this fork during bootstrap; no remote CI result is claimed.
+The initial bootstrap added documentation only. The subsequent runtime qualification prepares a private local instance and a paused Codex executor, with an existing Brain reader MCP connection. The operator must still authenticate the OpenAI account. This fork also limits a newly connected AI account to the selected existing agent by default. GitHub Actions remain disabled; no remote CI result is claimed.
 
 - [Ownership and integration boundaries](doc/loretech/ARCHITECTURE.md)
 - [Codex executor handoff](doc/loretech/CODEX-HANDOFF.md)
+- [Private runtime and managed local sign-in](doc/loretech/LOCAL-RUNTIME.md)
 - [Implementation stages and acceptance](doc/plans/2026-11-02-loretech-pilot-bootstrap.md)
 - [Bootstrap task](https://github.com/Tristanthsm/loretech-pilot/issues/1)
 

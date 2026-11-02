@@ -93,7 +93,7 @@ it("selects the returned new grant and actual method before adopting the persona
   await mount([account()]);
   await click("Connect another account");
   expect(document.body.textContent).toContain("default");
-  expect(credentialProps).toMatchObject({ connectionId: undefined, allAgents: true });
+  expect(credentialProps).toMatchObject({ connectionId: undefined, allAgents: false, agentIds: ["agent"] });
   let resolveDefault!: () => void;
   mocks.setDefault.mockImplementation(() => new Promise<void>(resolve => { resolveDefault = resolve; }));
   credentialProps!.onComplete({ connectionId: "new-connection", grantId: "new-grant", method: "api_key" });
@@ -105,13 +105,9 @@ it("selects the returned new grant and actual method before adopting the persona
   expect(onChange).toHaveBeenCalledWith({ provider: "anthropic", method: "api_key", mode: "responsible_user" });
 });
 
-it("lets the owner limit a new personal connection to this agent", async () => {
+it("limits an owner's new personal connection to the selected agent", async () => {
   await mount([]);
   await click("Connect another account");
-  const checkbox = document.querySelector<HTMLButtonElement>('[role="checkbox"]')!;
-  expect(checkbox).not.toBeNull();
-  expect(checkbox.getAttribute("aria-checked")).toBe("true");
-  flushSync(() => checkbox.click());
   expect(credentialProps).toMatchObject({ allAgents: false, agentIds: ["agent"] });
 });
 
@@ -138,12 +134,11 @@ it("keeps an ordinary member's new connection scoped to the current agent by def
   await mount([], false);
   expect(document.body.textContent).toContain("You have no default account");
   await click("Connect another account");
-  expect(document.querySelector<HTMLButtonElement>('[role="checkbox"]')!.disabled).toBe(true);
   expect(credentialProps).toMatchObject({ allAgents: false, agentIds: ["agent"] });
 });
 
-it("uses the server's connection-manager permission for company-wide access", async () => {
+it("does not turn connection-manager permission into company-wide access", async () => {
   await mount([], true);
   await click("Connect another account");
-  expect(credentialProps).toMatchObject({ allAgents: true });
+  expect(credentialProps).toMatchObject({ allAgents: false, agentIds: ["agent"] });
 });

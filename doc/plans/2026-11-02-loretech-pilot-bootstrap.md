@@ -6,15 +6,17 @@ Task: [fork bootstrap](https://github.com/Tristanthsm/loretech-pilot/issues/1). 
 
 Create a real Paperclip fork as the third structural repository. Preserve the independent Brain and Cell SDK. Use native executor adapters and plugins before changing core contracts. This delivery is public source and documentation only. No runtime, provider connection, executor registration or public deployment is included.
 
+Follow-up authorization extends this source bootstrap: prepare a private persistent runtime and an inactive executor so the operator can connect Codex. See [the runtime procedure](../loretech/LOCAL-RUNTIME.md). OpenAI authentication remains an operator action. Autonomous execution, public deployment, outreach and commercial provider connections remain excluded.
+
 ## Stages
 
 | Stage | Acceptance | State at bootstrap |
 | --- | --- | --- |
 | Source baseline | Verified fork parent, exact upstream release, preserved MIT license and upstream remote | Prepared on `loretech` |
 | Operator handoff | Version-specific Codex defaults, authority boundaries and bounded test protocol documented | Prepared for review |
-| Local runtime | Supported Node/pnpm, upstream checks, private access and startup verified | Pending |
-| Codex executor | Deliberate authentication, explicit permissions, disabled automatic triggers, bounded manual run | Pending; operator connects later |
-| Brain bridge | Real discovery/read, scoped proposal, denial and revocation through the host | Pending |
+| Local runtime | Isolated state, private authenticated access, native local environment and restart recovery | Prepared; targeted qualification only, full upstream gates pending |
+| Codex executor | Deliberate authentication, explicit permissions, disabled automatic triggers, bounded manual run | Paused executor prepared; authentication and model run pending |
+| Brain bridge | Real discovery/read, scoped proposal, denial and revocation through the host | Reader call and refused write qualified through Paperclip; per-agent identity and write/revocation integration pending |
 | Cells | RSSHub and yt-dlp qualified separately with receipts and error cases | Pending |
 | BeFood work | Useful sourced pilot research with measured cost and a clear decision | Pending |
 
