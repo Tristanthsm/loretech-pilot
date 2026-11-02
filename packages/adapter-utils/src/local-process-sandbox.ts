@@ -392,8 +392,11 @@ export async function buildLocalProcessSandboxSpawnTarget(input: {
       "--symlink", "usr/lib", "/lib",
       "--symlink", "usr/lib64", "/lib64",
     );
-    const created = new Set<string>(["/", "/proc", "/dev", "/tmp"]);
-    const mounted = new Set<string>();
+    // These destinations are already aliases into the /usr mount below. Binding
+    // a host path over a dangling alias fails on merged-/usr Linux hosts.
+    const systemAliases = ["/bin", "/sbin", "/lib", "/lib64"];
+    const created = new Set<string>(["/", "/proc", "/dev", "/tmp", ...systemAliases]);
+    const mounted = new Set<string>(systemAliases);
     const mount = async (source: string, access: LocalProcessSandboxAccess) => {
       const normalized = normalizeAbsolutePath(source, "Sandbox path");
       if (mounted.has(normalized) || !(await pathExists(normalized))) return;

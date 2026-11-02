@@ -101,6 +101,12 @@ describe("local process sandbox", () => {
     expect(target.args).toContain(workspace);
     expect(target.args).toContain(managedHome);
     expect(target.args.slice(-3)).toEqual([process.execPath, "-e", "console.log('ok')"]);
+    expect(target.args).toEqual(expect.arrayContaining(["--ro-bind", "/usr", "/usr"]));
+    for (let index = 0; index < target.args.length; index++) {
+      if (["--bind", "--ro-bind"].includes(target.args[index])) {
+        expect(["/bin", "/sbin", "/lib", "/lib64"]).not.toContain(target.args[index + 2]);
+      }
+    }
   });
 
   it.runIf(process.platform === "linux")("binds a confined absolute alias to the synchronized workspace", async () => {
